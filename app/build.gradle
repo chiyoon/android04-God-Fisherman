@@ -7,6 +7,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('/Users/chiyoon/Desktop/boostcamp2021/keypath/Untitled')
+            storePassword 'godfisherman'
+            keyAlias 'godfishermankey'
+            keyPassword 'godfisherman'
+        }
+    }
     compileSdk 31
 
     defaultConfig {
