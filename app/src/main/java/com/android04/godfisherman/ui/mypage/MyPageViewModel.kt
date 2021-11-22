@@ -27,6 +27,7 @@ class MyPageViewModel @Inject constructor(private val manager: SharedPreferenceM
     }
 
     fun doLogout() {
+        manager.deleteString(LogInViewModel.LOGIN_ID_TOKEN)
         manager.deleteString(LogInViewModel.LOGIN_NAME)
         manager.deleteString(LogInViewModel.LOGIN_EMAIL)
         manager.deleteString(LogInViewModel.LOGIN_IMG)

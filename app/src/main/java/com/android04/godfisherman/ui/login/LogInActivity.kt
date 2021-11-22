@@ -16,13 +16,13 @@ import com.android04.godfisherman.ui.base.BaseActivity
 import com.android04.godfisherman.ui.intro.GodFishermanIntro
 import com.android04.godfisherman.utils.showToast
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.AndroidEntryPoint
+import java.lang.Exception
 
 @AndroidEntryPoint
 class LogInActivity : BaseActivity<ActivityLogInBinding, LogInViewModel>(R.layout.activity_log_in) {
@@ -37,8 +37,8 @@ class LogInActivity : BaseActivity<ActivityLogInBinding, LogInViewModel>(R.layou
 
         setFullScreen()
         setLoginInstance()
-        setListener()
         setObserver()
+        setListener()
         setLoadingDialog()
 
         viewModel.fetchLoginData()
@@ -73,9 +73,9 @@ class LogInActivity : BaseActivity<ActivityLogInBinding, LogInViewModel>(R.layou
 
     private fun setObserver() {
         viewModel.isLogin.observe(this) {
-            if (it) {
-                showToast(this, R.string.login_auto)
-                moveToIntro()
+            if (it != "") {
+                showLoadingDialog()
+                firebaseAuthWithGoogle(it, false)
             }
         }
         viewModel.isLoading.observe(this) {
@@ -100,23 +100,27 @@ class LogInActivity : BaseActivity<ActivityLogInBinding, LogInViewModel>(R.layou
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                firebaseAuthWithGoogle(account)
-            } catch (e: ApiException) {
+                firebaseAuthWithGoogle(account.idToken)
+            } catch (e: Exception) {
                 viewModel.setLoading(false)
                 showToast(this, R.string.login_google_fail)
             }
         }
     }
 
-    private fun firebaseAuthWithGoogle(account: GoogleSignInAccount) {
-        val idToken = account.idToken
+    private fun firebaseAuthWithGoogle(idToken: String, first: Boolean = true) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     viewModel.setLoading(false)
-                    showToast(this, R.string.login_success)
-                    viewModel.setLoginData(account.displayName!!, account.email!!, account.photoUrl!!.toString())
+                    viewModel.setLoginData(idToken)
+                    viewModel.setUserInfo()
+                    if (first) {
+                        showToast(this, R.string.login_success)
+                    } else {
+                        showToast(this, R.string.login_auto)
+                    }
                     moveToIntro()
                 } else {
                     viewModel.setLoading(false)
